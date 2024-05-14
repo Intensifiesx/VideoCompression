@@ -7,10 +7,11 @@ def compressVidUsingFFMPEG(input_file, output_file):
     # Issue about VP9 is that it is slow to encode
     # Command to compress video using VP9 codec
     # Alex: changed to mpeg4 which is not as slow as VP9, but some files get larger after compression
+    # Alex: changed back to vp9 because mpeg4 barely compresses most of the time, but also encountered an issue with vp9 barely compressing for a 10 min video
     cmd = [
         'ffmpeg',
         '-i', input_file,               # Input file
-        '-c:v', 'mpeg4',                # mpeg4 codec
+        '-c:v', 'libvpx-vp9',           # vp9 codec
         '-b:v', '1M',                   # Target bitrate for video
         '-c:a', 'libopus',              # Opus audio codec
         output_file                     # Output file
