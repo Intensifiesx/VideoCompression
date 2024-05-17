@@ -39,6 +39,7 @@ if __name__ == "__main__":
         
     if initPaths:
         print("Please add video files to the 'Input' folder and run the script again.")
+        os.system("pause")
         sys.exit()
 
     input = [os.path.join(inputPath, file) for file in os.listdir(inputPath)]
@@ -55,3 +56,6 @@ if __name__ == "__main__":
         print(f"Input file size: {inputSize:.2f} MB")
         print(f"Output file size: {outputSize:.2f} MB")
         print(f"Compression ratio: {inputSize / outputSize:.2f}")
+        
+    print("Compression complete.")
+    os.system("pause")
