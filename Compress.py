@@ -28,20 +28,20 @@ def compressVidUsingFFMPEG(input_file, output_file):
 if __name__ == "__main__":
     inputPath = os.path.join(os.getcwd(), 'Input')
     outputPath = os.path.join(os.getcwd(), 'Output')
-    initPaths = 0
+    initPaths = False
 
     # Creates input and output folders
     for directory in [inputPath, outputPath]:
         if not os.path.exists(directory):
-            initPaths += 1
+            initPaths = True
             os.makedirs(directory)
             print(f"Directory '{directory}' created.")
         
-    if initPaths > 0:
+    if initPaths:
         print("Please add video files to the 'Input' folder and run the script again.")
         sys.exit()
 
-    input = [os.path.join(inputPath, file) for file in os.listdir(outputPath)]
+    input = [os.path.join(inputPath, file) for file in os.listdir(inputPath)]
 
     for video in input:
         file_name = os.path.splitext(os.path.basename(video))[0]
