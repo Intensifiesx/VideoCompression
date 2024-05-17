@@ -1,0 +1,9 @@
+altgraph @ file:///C:/ci_311/altgraph_1676434977885/work
+ffmpeg-python==0.2.0
+future @ file:///C:/ci_311_rebuilds/future_1678998246262/work
+imageio-ffmpeg==0.4.9
+pefile @ file:///C:/ci_311/pefile_1676438268619/work
+pyinstaller @ file:///C:/b/abs_b94gi_3vjm/croot/pyinstaller_1703109616045/work
+pyinstaller-hooks-contrib @ file:///C:/ci_311/pyinstaller-hooks-contrib_1676438831963/work
+pywin32==305.1
+pywin32-ctypes @ file:///C:/b/abs_2cfx5l4nvi/croot/pywin32-ctypes_1709340246092/work

@@ -12,3 +12,14 @@ Compress.spec
 
 # icon file
 icon.ico
+
+# environment stuff
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+env.bak/
+venv.bak/
