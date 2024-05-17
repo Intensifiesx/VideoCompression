@@ -6,17 +6,22 @@ This script uses the FFMPEG library to compress video files. It uses the VP9 cod
 
 -   Python 3.10 or greater
 -   FFMPEG
+-   PyInstaller (for building executable)
 
-## Usage
+## Script Usage
 
 1. Clone the repository.
-2. Place the video you want to compress in the same directory as the `Compress.py` script.
-3. Open `Compress.py` and modify the `input` and `output` variables to match your input and output file names.
-4. Download the FFMPEG library from [here](https://ffmpeg.org/download.html).
-5. Extract the contents and place the `ffmpeg` executable in the same directory as the `Compress.py` script.
-6. Execute `ffmpeg.exe` (if you are using Windows).
-7. Run the script using the following command in the terminal:
+2. Download the FFMPEG library from [here](https://ffmpeg.org/download.html).
+3. Extract the contents and place the `ffmpeg` executable in the `/ffmpeg` directory.
+4. Run the `Compress.py` script once to generate the `/Input` and `/Output` directories.
+5. Move uncompressed videos to the `/Input` directory.
+6. Run `Compress.py` to compress the videos. The compressed videos will be in the `Output/` directory.
 
-```sh
-python Compress.py
-```
+## Build Usage
+
+1. Clone the repository.
+2. Download the FFMPEG library from [here](https://ffmpeg.org/download.html).
+3. Extract the contents and place the `ffmpeg` executable in the `/ffmpeg` directory.
+4. Run `pip install pyinstaller`.
+5. Run this command to build the executable: `pyinstaller -F --add-data "./ffmpeg/*;./ffmpeg/" Compress.py`.
+6. Run `Compress.exe` in the `/dist` directory.

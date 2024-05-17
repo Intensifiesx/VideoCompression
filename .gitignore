@@ -1,3 +1,14 @@
-ffmpeg.exe
+# ffmpeg folder
+ffmpeg/*
+
+# Input/Output folders if running Python script
 Input/*
 Output/*
+
+# PyInstaller leftovers if building executable
+build/*
+dist/*
+Compress.spec
+
+# icon file
+icon.ico
