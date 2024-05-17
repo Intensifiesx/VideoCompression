@@ -1,14 +1,18 @@
-# ffmpeg folder
-ffmpeg/*
-
 # Input/Output folders if running Python script
-Input/*
-Output/*
+Input/
+Output/
 
 # PyInstaller leftovers if building executable
-build/*
-dist/*
-Compress.spec
+build/
+dist/
 
-# icon file
-icon.ico
+# Virtual environment stuff
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+env.bak/
+venv.bak/
