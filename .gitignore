@@ -1,9 +1,9 @@
 # Ignore all files in input/ except the folder itself
-input/*
-!input/.gitkeep
+Input/*
+!Input/.gitkeep
 
 # Ignore all files in output/ except the folder itself
-output/*
-!output/.gitkeep
+Output/*
+!Output/.gitkeep
 
 log.txt
