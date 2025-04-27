@@ -1,3 +1,5 @@
-Input/
-Output/
+Input/*
+Output/*
+!Input/1. INPUT FILES HERE.txt
+!Output/1. OUTPUT FILES HERE.txt
 log.txt
