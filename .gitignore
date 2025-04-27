@@ -1,9 +1,3 @@
-# Ignore all files in input/ except the folder itself
 Input/*
-!Input/.gitkeep
-
-# Ignore all files in output/ except the folder itself
 Output/*
-!Output/.gitkeep
-
 log.txt
