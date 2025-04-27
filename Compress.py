@@ -1,45 +1,56 @@
 #======Libraries======
 import sys
 import os
-
-# Prevents script from being executed directly (allows run.bat and executable)
-if (not "--from-batch" in sys.argv) and (not hasattr(sys, '_MEIPASS')):
-    print("Please do not run this Python script directly. Use 'run.bat' to use this script.")
-    os.system("pause")
-    sys.exit(1)
-
 import subprocess
-import fnmatch
+from datetime import datetime, date
+import shutil
+
+os.system(f'pip install -r requirements.txt --no-deps')
+
 import imageio_ffmpeg as iio_ffmpeg
-# import ffmpeg
 
 #======Function Definitions======
-def resource_path():
-    """
-    Locates the FFmpeg file resource.
-
-    Parameters:
-    None
-
-    Returns:
-    string: file path
-    """
+def resourcePath():
+    """Locates the FFmpeg file resource."""
+    ffmpeg_path = iio_ffmpeg.get_ffmpeg_exe()
     if hasattr(sys, '_MEIPASS'):
-        # gets ffmpeg as a bundle (running executable)
-        directory_path = os.path.join(sys._MEIPASS, 'imageio_ffmpeg', 'binaries')
-    else:
-        # gets ffmpeg as a directory (running script)
-        directory_path = os.path.join(os.path.abspath("."), os.pardir, 'Lib', 'site-packages', 'imageio_ffmpeg', 'binaries')
+        return os.path.join(sys._MEIPASS, ffmpeg_path)
+    return ffmpeg_path
 
-    files_in_directory = os.listdir(directory_path)
-    pattern = 'ffmpeg-win64-v*.exe'
-    matching_files = fnmatch.filter(files_in_directory, pattern)
-    matching_file_path = os.path.join(directory_path, matching_files[0])
-    return matching_file_path
+def getGPUAccelerationFlags():
+    """Detects available GPU acceleration options and returns appropriate FFmpeg flags."""
+    try:
+        # Check NVIDIA CUDA (most common)
+        subprocess.run([resourcePath(), '-hide_banner', '-encoders'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return {
+            'codec': 'h264_nvenc',
+            'flags': ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda']
+        }
+    except:
+        try:
+            # Check AMD AMF
+            return {
+                'codec': 'h264_amf',
+                'flags': []
+            }
+        except:
+            try:
+                # Check Intel QuickSync
+                return {
+                    'codec': 'h264_qsv',
+                    'flags': ['-hwaccel', 'qsv']
+                }
+            except:
+                # Fallback to CPU
+                return {
+                    'codec': 'libvpx-vp9',
+                    'flags': []
+                }
 
 def compressVidUsingFFMPEG(input_file, output_file):
     """
     Uses FFmpeg to compress a video file.
+    High-quality compression with efficient file size reduction.
 
     Parameters:
     input_file string: input file path
@@ -56,29 +67,73 @@ def compressVidUsingFFMPEG(input_file, output_file):
     # Alex: changed back to vp9 because mpeg4 barely compresses most of the time, but also encountered an issue with vp9 barely compressing for a 10 min video
     # NEW WAY:
         # ffmpeg.input(input_file).output(output_file, vcodec='libvpx-vp9', b='1M', acodec='libopus').run(cmd=iio_ffmpeg.get_ffmpeg_exe())
-    cmd = [
-        resource_path(),
-        '-i', input_file,               # Input file
-        '-c:v', 'libvpx-vp9',           # vp9 codec
-        '-b:v', '1M',                   # Target bitrate for video
-        '-c:a', 'libopus',              # Opus audio codec
-        '-b:a', '128k',                 # Target bitrate for Opus audio (example: 128 kbps)
-        '-strict', '-2',
-        output_file                     # Output file
+    gpu_config = getGPUAccelerationFlags()
+    
+    base_cmd = [
+        resourcePath(),
+        '-n',                          # Overwrite output
+        '-hwaccel', 'auto',            # Auto GPU detection
+        '-i', input_file,              # Input file
+        '-movflags', '+faststart',     # Web optimization
+        '-pix_fmt', 'yuv420p',        # Standard format
+        '-vsync', '0'                 # No duplicate frames
     ]
-    subprocess.run(cmd)
+
+    # GPU-specific optimized settings
+    if gpu_config['codec'] == 'h264_nvenc':  # NVIDIA
+        cmd = base_cmd + [
+            '-c:v', 'h264_nvenc',
+            '-preset', 'p6',           # Quality-focused preset
+            '-rc', 'vbr',              # Smart variable bitrate
+            '-cq', '28',               # Quality level (28=good balance)
+            '-b:v', '0',               # Let CQ control bitrate
+            '-spatial-aq', '1',
+            '-temporal-aq', '1',
+            '-qmin', '24',             # Min quality threshold
+            '-qmax', '32'              # Max quality threshold
+        ]
+    elif gpu_config['codec'] == 'h264_amf':  # AMD
+        cmd = base_cmd + [
+            '-c:v', 'h264_amf',
+            '-quality', 'balanced',
+            '-rc', 'vbr_quality',
+            '-qp_i', '26',
+            '-qp_p', '28',
+            '-qp_b', '30',
+            '-preanalysis', 'true'
+        ]
+    else:  # Intel QuickSync
+        cmd = base_cmd + [
+            '-c:v', 'h264_qsv',
+            '-global_quality', '28',
+            '-look_ahead', '1'
+        ]
+
+    # Audio settings (efficient compression)
+    cmd.extend([
+        '-c:a', 'aac',
+        '-b:a', '96k',                 # Slightly lower audio bitrate
+        '-ar', '44100',                # Standard sampling rate
+        output_file
+    ])
+
+    print("Executing:", ' '.join(cmd))
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error compressing {input_file}: {e}")
+        raise
     
 #======Execution Check======
 if __name__ == "__main__":
     # Executable
-    if hasattr(sys, '_MEIPASS'):
-        inputPath = os.path.join(os.getcwd(), 'Input')
-        outputPath = os.path.join(os.getcwd(), 'Output')
-    # Script
-    else:
-        inputPath = os.path.join(os.getcwd(), '../../Input')
-        outputPath = os.path.join(os.getcwd(), '../../Output')
+    inputPath = os.path.join(os.getcwd(), 'Input')
+    outputPath = os.path.join(os.getcwd(), 'Output')
     initPaths = False
+
+    totalInputSize = 0
+    totalOutputSize = 0
+    totalVideos = 0
 
     # Creates input and output folders
     for directory in [inputPath, outputPath]:
@@ -87,28 +142,59 @@ if __name__ == "__main__":
             os.makedirs(directory)
             print(f"Directory '{directory}' created.")
 
-    if initPaths:
-        print("Please add video files to the 'Input' folder and run the script again.")
-        if hasattr(sys, '_MEIPASS'):
-            os.system("pause") # Pauses for executable
-        sys.exit()
-
     input = [os.path.join(inputPath, file) for file in os.listdir(inputPath)]
+    log = os.path.join(os.getcwd(), 'log.txt')
+
+    with open(log, 'a') as logFile:
+        logFile.write("================================================\n")
+        logFile.write(f"Compression Log ({date.today()})\n")
 
     for video in input:
-        file_name = os.path.splitext(os.path.basename(video))[0]
-        inputSize = os.path.getsize(video) / (1024 * 1024)
-
-        output = os.path.join(outputPath, file_name + '_COMPRESSED.mp4')
-        compressVidUsingFFMPEG(video, output)
-
-        outputSize = os.path.getsize(output) / (1024 * 1024)
-
-        print(f"Input file size: {inputSize:.2f} MB")
-        print(f"Output file size: {outputSize:.2f} MB")
-        print(f"Compression ratio: {inputSize / outputSize:.2f}")
+        fileName = os.path.splitext(os.path.basename(video))[0]
+        inputSize = os.path.getsize(video) / (1024 * 1024)  # Size in MB
         
-    print("Compression complete.")
+        output = os.path.join(outputPath, fileName + '_COMPRESSED.mp4')
+        compressVidUsingFFMPEG(video, output)
+        outputSize = os.path.getsize(output) / (1024 * 1024)
+        
+        # Calculate compression metrics
+        sizeReduction = inputSize - outputSize
+        compressionRatio = inputSize / max(outputSize, 0.001)  # Prevent division by zero
+        percentReduction = (sizeReduction / inputSize) * 100 if inputSize > 0 else 0
+
+        # Update totals
+        totalInputSize += inputSize
+        totalOutputSize += outputSize
+        totalVideos += 1
+
+        # Enhanced logging
+        with open(log, 'a') as logFile:
+            logFile.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {fileName}\n")
+            
+            # Handle negative compression (output larger than input)
+            if outputSize >= inputSize:
+                logFile.write(f"\t[WARNING]: Compression ratio - {compressionRatio:.2} is less than 1. Removing output file and replacing with uncompressed.\n")
+                os.remove(output)
+                shutil.copy2(video, output)  # Preserve original with correct metadata
+                outputSize = inputSize
+                sizeReduction = 0.0
+                percentReduction = 0.0
+
+            logFile.write(f"\tVideo #{totalVideos} of {len(input)}\n")
+            logFile.write(f"\tInput: {inputSize:.2f}MB\n")
+            logFile.write(f"\tOutput: {outputSize:.2f}MB\n")
+            logFile.write(f"\tSaved: {sizeReduction:.2f}MB ({percentReduction:.1f}%)\n")
+
+    # Write footer after all videos are processed
+    with open(log, 'a') as logFile:
+        logFile.write("------------------------------------------------\n")
+        logFile.write(f"Batch completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        logFile.write(f"Total input size: {totalInputSize:.2f} MB\n")
+        logFile.write(f"Total output size: {totalOutputSize:.2f} MB\n")
+        logFile.write(f"Saved: {totalInputSize - totalOutputSize:.2f} MB\n")
+        logFile.write(f"Total videos processed: {totalVideos}\n")
+        logFile.write("================================================\n\n\n")
 
     if hasattr(sys, '_MEIPASS'):
         os.system("pause") # Pauses for executable
+

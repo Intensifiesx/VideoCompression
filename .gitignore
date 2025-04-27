@@ -1,18 +1,9 @@
-# Input/Output folders if running Python script
-Input/
-Output/
+# Ignore all files in input/ except the folder itself
+input/*
+!input/.gitkeep
 
-# PyInstaller leftovers if building executable
-build/
-dist/
+# Ignore all files in output/ except the folder itself
+output/*
+!output/.gitkeep
 
-# Virtual environment stuff
-venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-env.bak/
-venv.bak/
+log.txt
