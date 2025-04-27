@@ -1,7 +1,7 @@
 # 🎬 Video Compression Tool with GPU Acceleration  
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue) ![FFmpeg](https://img.shields.io/badge/FFmpeg-5.0%2B-orange)
 
-A high-performance video compression tool leveraging FFmpeg with automatic GPU acceleration for faster processing without sacrificing quality.  
+A high-performance video compression tool utilizing FFmpeg with automatic GPU acceleration for faster processing without sacrificing quality.  
 
 ## ✨ Features  
 - **Smart Compression** - Automatically selects optimal settings based on your hardware  
